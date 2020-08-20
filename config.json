@@ -1,0 +1,60 @@
+{
+  "min_packer_version": "1.6.1",
+  "variables": {
+    "security_level": "2",
+    "coordinator_seed": "",
+    "depth": "6",
+    "tick": "15",
+    "mwm": "9"
+  },
+  "builders": [
+    {
+      "name": "hornet-private-tangle",
+      "ami_name": "hornet-private-tangle-{{timestamp}}",
+      "ami_description": "Ubuntu 20.04 AMI that bootstraps a private tangle.",
+      "instance_type": "m5.xlarge",
+      "region": "eu-central-1",
+      "ami_regions": ["eu-central-1"],
+      "type": "amazon-ebs",
+      "source_ami_filter": {
+       "filters": {
+         "virtualization-type": "hvm",
+         "architecture": "x86_64",
+         "name": "ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*",
+         "block-device-mapping.volume-type": "gp2",
+         "root-device-type": "ebs"
+       },
+       "owners": [
+         "099720109477"
+       ],
+       "most_recent": true
+      },
+      "ssh_username": "ubuntu"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "script": "shutdown-apt-services.sh"
+    },
+    {
+      "type": "shell",
+      "environment_vars": [
+        "SEC_LVL={{user `security_level`}}",
+        "COO_SEED={{user `coordinator_seed`}}",
+        "DEPTH={{user `depth`}}",
+        "TICK={{user `tick`}}",
+        "MWM={{user `mwm`}}"
+      ],
+      "script": "{{template_dir}}/setup.sh"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "sudo systemctl enable apt-daily.timer",
+        "sudo systemctl enable apt-daily-upgrade.timer"
+        ]
+    }
+
+  ]
+}
